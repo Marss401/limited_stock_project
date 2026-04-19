@@ -1,0 +1,127 @@
+generator client {
+    provider = "prisma-client"
+    output   = "./generated"
+}
+ 
+datasource db {
+  provider = "postgresql"
+}
+ 
+// ──────────────────────────────────────────────────────────
+// PRODUCT: The item being sold
+// Think of this as one row in a spreadsheet called "Products"
+// ──────────────────────────────────────────────────────────
+model Product {
+  id      	String   @id @default(uuid())  // Unique ID (auto-generated)
+  name    	String   @unique               	// "Air Jordan 1 Retro"
+  description String?                     	// Optional longer text
+  price   	Float                       	// 199.99
+  totalStock  Int                         	// Total ever available (50)
+  // CRITICAL: This is the number currently available to reserve
+  // It goes DOWN when someone reserves, UP when a reservation expires
+  available   Int                         	// Currently available (starts at 50)
+  imageUrl	String?                     	// Optional product image URL
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+ 
+  // Relationships
+  reservations Reservation[]
+  orders   	Order[]
+  inventoryLog InventoryLog[]
+ 
+  // Index for quick queries on available stock
+  @@index([available])
+}
+ 
+// ──────────────────────────────────────────────────────────
+// USER: Who is buying
+// ──────────────────────────────────────────────────────────
+model User {
+  id    	String   @id @default(uuid())
+  email 	String   @unique
+  name  	String?
+  createdAt DateTime @default(now())
+  
+  reservations Reservation[]
+  orders   	Order[]
+}
+ 
+// ──────────────────────────────────────────────────────────
+// RESERVATION: A temporary hold on stock
+// This is the CORE of the entire system.
+// It's like putting an item in your shopping cart at a store
+// and having a timer that says "buy in 5 min or we put it back"
+// ──────────────────────────────────────────────────────────
+enum ReservationStatus {
+  ACTIVE  	// Currently held, timer ticking
+  COMPLETED   // Customer checked out successfully
+  EXPIRED 	// Timer ran out, stock returned
+  CANCELLED   // Customer manually cancelled
+}
+ 
+model Reservation {
+  id     	String        	@id @default(uuid())
+  userId 	String
+  productId  String
+  quantity   Int           	// How many they want
+  status 	ReservationStatus @default(ACTIVE)
+  expiresAt  DateTime      	// CRITICAL: When this reservation dies
+  createdAt  DateTime      	@default(now())
+  updatedAt  DateTime      	@updatedAt
+ 
+  user	User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  order   Order?  // Links to an order if checkout completed
+ 
+  // Compound index: quickly find active reservations per user+product
+  @@index([userId, productId, status])
+  // Index for the cron job that finds expired reservations
+  @@index([status, expiresAt])
+}
+ 
+// ──────────────────────────────────────────────────────────
+// ORDER: A completed purchase
+// ──────────────────────────────────────────────────────────
+model Order {
+  id        	String   @id @default(uuid())
+  userId    	String
+  reservationId String   @unique  // One order per reservation
+  totalPrice	Float
+  createdAt 	DateTime @default(now())
+ 
+  user    	User    	@relation(fields: [userId], references: [id])
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+ 
+  // Store what was ordered (snapshot at time of purchase)
+  productId   String
+  product 	Product @relation(fields: [productId], references: [id])
+  quantity    Int
+}
+ 
+// ──────────────────────────────────────────────────────────
+// INVENTORY LOG: Audit trail
+// Think of this as a security camera for stock changes
+// Every time stock changes, we record WHY it changed
+// ──────────────────────────────────────────────────────────
+enum InventoryAction {
+  RESERVED   	// Stock decreased (someone reserved)
+  RELEASED   	// Stock increased (reservation expired/cancelled)
+  PURCHASED  	// Reservation converted to order
+  MANUAL_ADJUST  // Admin manually changed stock
+}
+ 
+model InventoryLog {
+  id        	String      	@id @default(uuid())
+  productId 	String
+  action    	InventoryAction
+  quantityChange Int        	// +2 means stock went UP, -2 means DOWN
+  previousStock Int         	// Stock BEFORE the change
+  newStock  	Int         	// Stock AFTER the change
+  referenceId   String?     	// Which reservation/order caused this
+  metadata  	Json?       	// Extra info (reason, etc.)
+  createdAt 	DateTime    	@default(now())
+ 
+  product Product @relation(fields: [productId], references: [id])
+ 
+  @@index([productId, createdAt])
+}
