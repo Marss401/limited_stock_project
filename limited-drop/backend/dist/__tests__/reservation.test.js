@@ -25,7 +25,9 @@ describe("Reservation Service", () => {
     test("should create a reservation and decrease stock", async () => {
         const reservation = await (0, reservation_service_1.createReservation)(userId, productId, 2);
         expect(reservation.status).toBe("ACTIVE");
-        const product = await database_1.default.product.findUnique({ where: { id: productId } });
+        const product = await database_1.default.product.findUnique({
+            where: { id: productId },
+        });
         expect(product?.available).toBe(3); // 5 - 2 = 3
     });
     test("should reject reservation when stock is insufficient", async () => {
@@ -49,7 +51,12 @@ describe("Reservation Service", () => {
         });
         const count = await (0, reservation_service_1.expireReservations)();
         expect(count).toBe(1);
-        const product = await database_1.default.product.findUnique({ where: { id: productId } });
+        const product = await database_1.default.product.findUnique({
+            where: { id: productId },
+        });
         expect(product?.available).toBe(5); // Stock restored
+        // afterAll(async () => {
+        //   await prisma.$disconnect(); // closes connection pool
+        // });
     });
 });
