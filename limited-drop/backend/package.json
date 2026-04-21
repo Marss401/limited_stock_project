@@ -8,6 +8,7 @@
     "start": "node dist/index.js",
     "test": "jest --coverage",
     "seed": "ts-node prisma/seed.ts",
+    "type": "module",
     "studio": "npx prisma studio"
   },
   "keywords": [],

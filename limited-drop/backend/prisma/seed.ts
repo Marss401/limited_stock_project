@@ -10,7 +10,7 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("🌱 Seeding database...");
+  console.log("Seeding database...");
 
   await prisma.$transaction(async (tx) => {
     // ─────────────────────────────
@@ -56,7 +56,7 @@ async function main() {
     // ⚠️ IMPORTANT: ensure name is unique in schema if using this
     for (const product of productsData) {
       await tx.product.upsert({
-        where: { name: product.name }, // ✅ FIXED
+        where: { name: product.name }, // FIXED
         update: {
           description: product.description,
           price: product.price,
@@ -67,7 +67,7 @@ async function main() {
       });
     }
 
-    console.log("✅ Seed complete:", {
+    console.log("Seed complete:", {
       user: user.email,
       products: productsData.length,
     });
@@ -79,10 +79,10 @@ async function main() {
 // ─────────────────────────────
 main()
   .catch((e) => {
-    console.error("❌ Seed failed:", e);
+    console.error("Seed failed:", e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
-    await pool.end(); // 🔥 important for adapter
+    await pool.end(); // important for adapter
   });
