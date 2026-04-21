@@ -1,11 +1,11 @@
 // src/middleware/errorHandler.ts
 import { Request, Response, NextFunction } from "express";
+import { Prisma } from "../generated/prisma/client";
 import { ZodError } from "zod";
-import { Prisma } from "@prisma/client";
 import logger from "../utils/logger";
  
 export function errorHandler(
-  err: Error,
+  err: any,
   req: Request,
   res: Response,
   _next: NextFunction
@@ -52,6 +52,6 @@ export function errorHandler(
   // Catch-all
   return res.status(500).json({
 	success: false,
-	error: "Internal server error",
+	error: err.message || "Internal Server Error",
   });
 }

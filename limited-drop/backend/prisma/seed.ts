@@ -1,7 +1,8 @@
 import "dotenv/config";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from '@prisma/client';
+// Use the same path you used in your script.ts
+import { PrismaClient } from '../generated/prisma/client';
 
 const connectionString = process.env.DATABASE_URL!;
 const pool = new Pool({ connectionString });
@@ -10,18 +11,25 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  // console.log("Cleaning database...");
+  // await prisma.inventoryLog.deleteMany();
+  // await prisma.reservation.deleteMany(); 
+  //  2. Delete Parent records last
+  // await prisma.product.deleteMany();
+  // await prisma.user.deleteMany();
+
   console.log("Seeding database...");
 
   await prisma.$transaction(async (tx) => {
     // ─────────────────────────────
     // 1. USER (idempotent)
     // ─────────────────────────────
-    const user = await tx.user.upsert({
+    const user = await prisma.user.upsert({
       where: { email: "test@example.com" },
       update: {},
       create: {
         email: "test@example.com",
-        name: "Test User",
+        name: "Test User2",
       },
     });
 
@@ -53,9 +61,9 @@ async function main() {
       },
     ];
 
-    // ⚠️ IMPORTANT: ensure name is unique in schema if using this
+    // IMPORTANT: ensure name is unique in schema if using this
     for (const product of productsData) {
-      await tx.product.upsert({
+      await prisma.product.upsert({
         where: { name: product.name }, // FIXED
         update: {
           description: product.description,
@@ -74,9 +82,7 @@ async function main() {
   });
 }
 
-// ─────────────────────────────
 // CLEAN SHUTDOWN
-// ─────────────────────────────
 main()
   .catch((e) => {
     console.error("Seed failed:", e);

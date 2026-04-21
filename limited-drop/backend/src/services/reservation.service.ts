@@ -1,5 +1,5 @@
 import prisma from "../config/database";
-import { ReservationStatus, InventoryAction } from "@prisma/client";
+import { ReservationStatus, InventoryAction } from "../generated/prisma/client";
 
 const RESERVATION_TTL_MINUTES = parseInt (
     process.env.RESERVATION_TTL_MINUTES  || "5"
