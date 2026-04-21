@@ -3,16 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/index.ts",
-    "postinstall": "prisma generate --schema ./prisma/schema.prisma",
-    "build": "tsc",
+    "postinstall": "prisma generate", 
+    "build": "npm run postinstall && tsc", 
     "start": "node dist/src/index.js",
-    "test": "jest --coverage",
-    "seed": "tsx --env-file=.env prisma/seed.ts",
-    "studio": "npx prisma studio"
-  },
-    "prisma": {
-    "seed": "tsx --env-file=.env prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",
