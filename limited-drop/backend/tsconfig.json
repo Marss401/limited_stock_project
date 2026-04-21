@@ -2,13 +2,16 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
+    "moduleResolution": "node", // Add this: mandatory for finding index.d.ts in folders
+    "baseUrl": ".", 
     "lib": ["ES2020"],
     "types": ["node", "jest"],
     "outDir": "./dist",
     "rootDir": "./",
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true // Add this: prevents TS from errors inside the huge Prisma file
   },
-  "include": ["src/**/*", "prisma/**/*.ts", "prisma.config.ts", "src/generated/prisma/client"],
+  "include": ["src/**/*", "prisma/**/*.ts"], // Simplified
   "exclude": ["node_modules", "dist"]
 }
